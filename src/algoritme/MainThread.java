@@ -10,8 +10,8 @@ import java.util.LinkedList;
 public class MainThread {
 
     private String website;
-    private Integer threads;
-    private final LinkedList queue = new LinkedList();
+    private Integer threads = 10;
+    private final Queue queue = Queue.getInstance();
     private final PoolWorker[] workers = new PoolWorker[threads];
     
     public MainThread(String website) {
@@ -21,11 +21,13 @@ public class MainThread {
     public void start() {
         
         // Eerste pagina toevoegen een work queue
-        new DownloadThread(website, queue);
+        System.out.println("Eerste pagina");
+        Queue.getInstance().add(new DownloadThread(website));
         
         // Threads aanmaken en aan het werk zetten
+        System.out.println("Threads aanmaken");
         for(int i = 0; i < threads; i++) {
-            workers[i] = new PoolWorker();
+            workers[i] = new PoolWorker(i);
             workers[i].start();
         }
         
@@ -35,6 +37,12 @@ public class MainThread {
     
     
     private class PoolWorker extends Thread {
+
+        private Integer id;
+        
+        private PoolWorker(int i) {
+            this.id = i;
+        }
         
         public void run() {
         
@@ -44,6 +52,7 @@ public class MainThread {
                 synchronized(queue) {
                     while (queue.isEmpty()) {
                         try {
+                            System.out.println("Geen werk, wachten!");
                             queue.wait();
                         } catch (InterruptedException ignore) {
                             
@@ -54,7 +63,8 @@ public class MainThread {
                 }
                 
                 try {
-                    r.run();
+                    System.out.println("Thread " + id + " is running.");
+                    r.run(); 
                 } catch (RuntimeException e) {
                     e.printStackTrace();
                 }

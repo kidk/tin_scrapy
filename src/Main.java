@@ -18,7 +18,7 @@ public class Main {
         new JCommander(validator, args);
 
         // Main loop
-        MainThread algo = new MainThread(validator.website);
+        MainThread algo = new MainThread(validator.website.get(0));
         
         // Set commandline options
         algo.setThreads(validator.threads);

@@ -1,17 +1,14 @@
 package algoritme;
 
-import java.net.URL;
-import java.util.LinkedList;
-
 /**
  *
  * @author samuelvandamme
  */
 public class DownloadThread implements Runnable {
     
-    private LinkedList queue;
+    private final Queue queue = Queue.getInstance();
 
-    DownloadThread(String website, LinkedList queue) {
+    DownloadThread(String website) {
         
     }
     
@@ -23,8 +20,15 @@ public class DownloadThread implements Runnable {
     }
 
     public void run() {
-        System.out.println("TEst");
-        execute(new DownloadThread("http://www.google.be", queue));
+        // Pagina afhalen
+        
+        // Afbeeldingen afhalen
+        
+        // Links afhalen en opslaan in queue
+        // Opslaan in queue : execute(new DownloadThread(Url van pagina)
+        // Links aanpassen zodat ze lokaal werken
+        
+        // Pagina opslaan
     }
     
 }
