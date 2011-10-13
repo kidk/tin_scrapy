@@ -1,7 +1,11 @@
 package algoritme;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -10,9 +14,9 @@ import java.util.LinkedList;
 public class MainThread {
 
     private String website;
-    private Integer threads = 10;
+    private Integer threads;
     private final Queue queue = Queue.getInstance();
-    private final PoolWorker[] workers = new PoolWorker[threads];
+    private final List<PoolWorker> workers = new ArrayList();
     
     public MainThread(String website) {
         this.website = website;
@@ -27,11 +31,10 @@ public class MainThread {
         // Threads aanmaken en aan het werk zetten
         System.out.println("Threads aanmaken");
         for(int i = 0; i < threads; i++) {
-            workers[i] = new PoolWorker(i);
-            workers[i].start();
+            workers.add(i, new PoolWorker(i));
+            workers.get(i).start();
         }
-        
-        
+
     }
     
     
