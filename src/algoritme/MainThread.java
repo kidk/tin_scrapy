@@ -9,17 +9,21 @@ import java.util.LinkedList;
  */
 public class MainThread {
 
-    private URL website;
+    private String website;
     private Integer threads;
     private final LinkedList queue = new LinkedList();
     private final PoolWorker[] workers = new PoolWorker[threads];
     
     public MainThread(String website) {
-        
+        this.website = website;
     }
 
     public void start() {
         
+        // Eerste pagina toevoegen een work queue
+        new DownloadThread(website, queue);
+        
+        // Threads aanmaken en aan het werk zetten
         for(int i = 0; i < threads; i++) {
             workers[i] = new PoolWorker();
             workers[i].start();
@@ -28,12 +32,7 @@ public class MainThread {
         
     }
     
-    public void execute(Runnable r) {
-        synchronized(queue) {
-            queue.addLast(r);
-            queue.notify();
-        }
-    }
+    
     
     private class PoolWorker extends Thread {
         
@@ -73,11 +72,11 @@ public class MainThread {
         this.threads = threads;
     }
 
-    public URL getWebsite() {
+    public String getWebsite() {
         return website;
     }
 
-    public void setWebsite(URL website) {
+    public void setWebsite(String website) {
         this.website = website;
     }
     

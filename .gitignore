@@ -3,3 +3,5 @@ nbproject/*
 nbproject/**/*
 build/*
 build/**/*
+dist/*
+dist/**/*
