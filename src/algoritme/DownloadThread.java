@@ -26,6 +26,7 @@ public class DownloadThread implements Runnable {
         
         // Links afhalen en opslaan in queue
         // Opslaan in queue : execute(new DownloadThread(Url van pagina)
+        
         // Links aanpassen zodat ze lokaal werken
         
         // Pagina opslaan
