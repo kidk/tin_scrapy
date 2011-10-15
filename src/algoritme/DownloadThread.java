@@ -30,6 +30,7 @@ public class DownloadThread implements Runnable {
         // Links aanpassen zodat ze lokaal werken
         
         // Pagina opslaan
+        execute(new DownloadThread("http://www.google.be"));
     }
     
 }

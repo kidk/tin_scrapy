@@ -51,7 +51,7 @@ public class MainThread {
         
             Runnable r;
             
-            while(true) {
+            while(!queue.isEmpty()) {
                 synchronized(queue) {
                     while (queue.isEmpty()) {
                         try {
@@ -72,6 +72,8 @@ public class MainThread {
                     e.printStackTrace();
                 }
             }
+            
+            System.out.println("Thread " + id + " stopped.");
             
         }
         
