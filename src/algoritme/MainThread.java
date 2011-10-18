@@ -1,11 +1,7 @@
 package algoritme;
 
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -42,6 +38,7 @@ public class MainThread {
     private class PoolWorker extends Thread {
 
         private Integer id;
+        private final Queue queue = Queue.getInstance();
         
         private PoolWorker(int i) {
             this.id = i;
@@ -73,7 +70,7 @@ public class MainThread {
                 }
             }
             
-            System.out.println("Thread " + id + " stopped.");
+            System.out.println("Thread " + id + " stopped. (" + queue.size() + ")");
             
         }
         
