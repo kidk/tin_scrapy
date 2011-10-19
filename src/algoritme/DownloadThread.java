@@ -1,16 +1,24 @@
 package algoritme;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.activation.MimetypesFileTypeMap;
+import net.sf.jmimemagic.Magic;
+import net.sf.jmimemagic.MagicException;
+import net.sf.jmimemagic.MagicMatch;
+import net.sf.jmimemagic.MagicMatchNotFoundException;
+import net.sf.jmimemagic.MagicParseException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -37,36 +45,47 @@ public class DownloadThread implements Runnable {
     }
 
     public void run() {
-        // Pagina afhalen
         Document doc = null;
-        System.out.println("starting " + website);
-        System.out.println("download");
+        InputStream input = null;
+        URI uri = null;
+
+        // Debug
+        System.out.println("Fetching " + website);
         
-        // Mimetype checking
-        // hier zit ik momenteel effe vast, we hebben goeie mimetype detectie nodig om te zien wat we moeten downloaden en wat niet
-        // check functie beneden
-        
+        // Bestand ophalen
         try {
-            doc = Jsoup.connect(website).get();
+            uri = new URI(website);
+            input = uri.toURL().openStream();
+        } catch (URISyntaxException ex) {
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, website + " niet afgehaald.", ex);
-            return;
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        // Afbeeldingen / CSS / Javascript / Flash / ... afhalen
-        System.out.println("images");
-        Elements images = doc.getElementsByTag("img");
-        for(Element image : images)
-            execute(new DownloadThread(getBaseUrl(website) + getPath(image.attr("src"))));
+        // Type controleren
+        String type = getMimeType(website);
 
-        // Links afhalen en opslaan in queue
-        // Opslaan in queue : execute(new DownloadThread(Url van pagina)
+        if (type.equals("text/html")) {
+            // HTML Parsen
+            try {
+                doc = Jsoup.connect(website).get();
+            } catch (IOException ex) {
+                Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, website + " niet afgehaald.", ex);
+                return;
+            }
 
-        // Links aanpassen zodat ze lokaal werken
-
-        // Pagina opslaan
+            // Afbeeldingen / CSS / Javascript / Flash / ... afhalen
+            System.out.println("images");
+            Elements images = doc.getElementsByTag("img");
+            for(Element image : images)
+                execute(new DownloadThread(getBaseUrl(website) + getPath(image.attr("src"))));
+        }
+        
+        
     }
-    
+
     public String getPath(String url) {
         // Path ophalen
         String result = "fail";
@@ -76,13 +95,14 @@ public class DownloadThread implements Runnable {
         } catch (URISyntaxException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
-        if (result.charAt(0) != '/')
+
+        if (result.charAt(0) != '/') {
             result = "/" + result;
-        
+        }
+
         return result;
     }
-    
+
     public String getBaseUrl(String url) {
         // Path ophalen
         try {
@@ -93,19 +113,27 @@ public class DownloadThread implements Runnable {
         } catch (MalformedURLException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         return "fail";
     }
-    
-    //       ##
-    //       ##
-    //       ##
-    //       ##
-    //       ##
-    //   ##########
-    //     ######
-    //       ##
+
     public String getMimeType(String url) {
-        return new MimetypesFileTypeMap().getContentType(url);
+        URL uri = null;
+        String result = "";
+        try {
+            uri = new URL(url);
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        try {
+            result = ((HttpURLConnection) uri.openConnection()).getContentType();
+            if (result.indexOf(";") != -1)
+                return result.substring(0, result.indexOf(";"));
+            else
+                return result;
+        } catch (IOException ex) {
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+            return "text/unknown";
+        }
     }
 }

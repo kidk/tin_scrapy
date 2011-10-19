@@ -61,13 +61,8 @@ public class DownloadThreadTest {
     public void testGetMimeType() {
         DownloadThread instance = new DownloadThread("");
         
-        assertEquals(instance.getMimeType("http://www.google.be/"), "application/octet-stream");
+        assertEquals(instance.getMimeType("http://www.google.be/"), "text/html");
         assertEquals(instance.getMimeType("http://www.google.be/test/index.html"), "text/html");
         assertEquals(instance.getMimeType("http://www.google.be/index.html"), "text/html");
-        assertEquals(instance.getMimeType("http://www.google.be/index.css"), "application/octet-stream");
-        assertEquals(instance.getMimeType("http://www.google.be/index.png"), "application/octet-stream");
-        assertEquals(instance.getMimeType("http://www.google.be/index.gif"), "image/gif");
-        assertEquals(instance.getMimeType("http://www.google.be/index.php"), "application/octet-stream");
-        assertEquals(instance.getMimeType("http://www.google.be/index.jpg"), "image/jpeg");
     }
 }
