@@ -6,6 +6,7 @@ import java.util.List;
 
 /**
  * Docs : http://jcommander.org/
+ * @author samuelvandamme
  */
 public class CommandlineValidator {
     @Parameter(description = "Website", required = true)
