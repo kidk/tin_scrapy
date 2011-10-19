@@ -65,4 +65,14 @@ public class DownloadThreadTest {
         assertEquals(instance.getMimeType("http://www.google.be/test/index.html"), "text/html");
         assertEquals(instance.getMimeType("http://www.google.be/index.html"), "text/html");
     }
+    
+    @Test
+    public void testgetPathWithFilename() {
+        DownloadThread instance = new DownloadThread("");
+        
+        assertEquals(instance.getPathWithFilename("http://www.google.be/"), "/index.html");
+        assertEquals(instance.getPathWithFilename("http://www.google.be/test/index.html"), "/test/index.html");
+        assertEquals(instance.getPathWithFilename("http://www.google.be/index.html"), "/index.html");
+        assertEquals(instance.getPathWithFilename("http://www.google.be/google.png"), "/google.png");
+    }
 }

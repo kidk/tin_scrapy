@@ -1,6 +1,8 @@
 package algoritme;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -42,7 +44,7 @@ public class DownloadThread implements Runnable {
 
         // Debug
         System.out.println("Fetching " + website);
-        
+
         // Bestand ophalen
         try {
             uri = new URI(website);
@@ -70,11 +72,37 @@ public class DownloadThread implements Runnable {
             // Afbeeldingen / CSS / Javascript / Flash / ... afhalen
             System.out.println("images");
             Elements images = doc.getElementsByTag("img");
-            for(Element image : images)
+            for (Element image : images) {
                 execute(new DownloadThread(getBaseUrl(website) + getPath(image.attr("src"))));
+            }
         }
-        
-        File bestand = new File(getFileName(website)); 
+
+        File bestand = new File(getPathWithFilename(website));
+        if (bestand.canWrite()) {
+            FileOutputStream output = null;
+            try {
+                output = new FileOutputStream(bestand);
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            try {
+                while ((bytesRead = input.read(buffer)) != -1) {
+                    output.write(buffer, 0, bytesRead);
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            try {
+                input.close();
+                output.close();
+            } catch (IOException ex) {
+                Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        } else {
+            System.out.println(website + " kan niet opgeslagen worden.");
+        }
     }
 
     public String getPath(String url) {
@@ -92,6 +120,16 @@ public class DownloadThread implements Runnable {
         }
 
         return result;
+    }
+
+    public String getPathWithFilename(String url) {
+        String result = getPath(url);
+
+        if (result.charAt(result.length() - 1) == '/') {
+            return result + "index.html";
+        } else {
+            return result;
+        }
     }
 
     public String getBaseUrl(String url) {
@@ -118,18 +156,14 @@ public class DownloadThread implements Runnable {
         }
         try {
             result = ((HttpURLConnection) uri.openConnection()).getContentType();
-            if (result.indexOf(";") != -1)
+            if (result.indexOf(";") != -1) {
                 return result.substring(0, result.indexOf(";"));
-            else
+            } else {
                 return result;
+            }
         } catch (IOException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
             return "text/unknown";
         }
     }
-    
-    public String getFileName(String url) {
-        return "niet af";
-    }
-    
 }
