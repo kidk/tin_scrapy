@@ -70,7 +70,7 @@ public class DownloadThread implements Runnable {
         if (type.equals("text/html")) {
             // HTML Parsen
             try {
-                doc = Jsoup.connect(website).get();
+                doc = Jsoup.parse(input, "UTF-8", getBaseUrl(website));
             } catch (IOException ex) {
                 Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, website + " niet afgehaald.", ex);
                 return;
@@ -83,7 +83,7 @@ public class DownloadThread implements Runnable {
                 execute(new DownloadThread(getBaseUrl(website) + getPath(image.attr("src"))));
         }
         
-        
+        File bestand = new File(getFileName(website)); 
     }
 
     public String getPath(String url) {
@@ -136,4 +136,9 @@ public class DownloadThread implements Runnable {
             return "text/unknown";
         }
     }
+    
+    public String getFileName(String url) {
+        return "niet af";
+    }
+    
 }
