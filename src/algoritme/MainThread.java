@@ -13,6 +13,7 @@ public class MainThread {
     private Integer threads;
     private final Queue queue = Queue.getInstance();
     private final List<PoolWorker> workers = new ArrayList();
+    private Integer running = 0;
     
     public MainThread(String website) {
         this.website = website;
@@ -38,7 +39,6 @@ public class MainThread {
     private class PoolWorker extends Thread {
 
         private Integer id;
-        private final Queue queue = Queue.getInstance();
         
         private PoolWorker(int i) {
             this.id = i;
@@ -48,7 +48,7 @@ public class MainThread {
         
             Runnable r;
             
-            while(!queue.isEmpty()) {
+            while(!queue.isEmpty() || running > 0) {
                 synchronized(queue) {
                     while (queue.isEmpty()) {
                         try {
@@ -64,7 +64,10 @@ public class MainThread {
                 
                 try {
                     System.out.println("Thread " + id + " is running.");
+                    running++;
                     r.run(); 
+                    System.out.println("Thread " + id + " is done.");
+                    running--;
                 } catch (RuntimeException e) {
                     e.printStackTrace();
                 }
