@@ -10,73 +10,84 @@ import java.util.List;
 public class MainThread {
 
     private String website;
-    private Integer threads; 
+    private Integer threads;
     private final Queue queue = Queue.getInstance();
     private final List<PoolWorker> workers = new ArrayList();
     private Integer running = 0;
-    
+
     public MainThread(String website) {
         this.website = website;
     }
 
     public void start() {
-        
+
         // Eerste pagina toevoegen een work queue
         System.out.println("Eerste pagina");
         Queue.getInstance().add(new DownloadThread(website));
-        
+
         // Threads aanmaken en aan het werk zetten
         System.out.println("Threads aanmaken");
-        for(int i = 0; i < threads; i++) {
+        for (int i = 0; i < threads; i++) {
             workers.add(i, new PoolWorker(i));
             workers.get(i).start();
         }
 
     }
-    
+
     private class PoolWorker extends Thread {
 
         private Integer id;
-        
+
         private PoolWorker(int i) {
             this.id = i;
         }
-        
+
         public void run() {
-        
-            Runnable r;
-            
-            while(!queue.isEmpty() || running > 0) {
-                synchronized(queue) {
-                    while (queue.isEmpty()) {
+
+            Runnable r = null;
+
+            while (!queue.isEmpty() || running > 0) {
+                synchronized (queue) {
+                    while (queue.isEmpty() && running > 0) {
                         try {
-                            System.out.println("Geen werk, wachten!");
+                            System.out.println("Thread " + id + " waiting");
                             queue.wait();
                         } catch (InterruptedException ignore) {
-                            
                         }
                     }
-                    
-                    r = (Runnable) queue.removeFirst();
+
+                    if (!queue.isEmpty()) {
+                        r = (Runnable) queue.removeFirst();
+                    } 
                 }
-                
-                try {
-                    System.out.println("Thread " + id + " is running." + "[" + running + "]");
-                    running++;
-                    r.run(); 
-                    System.out.println("Thread " + id + " is done." + "[" + running + "]");
-                    running--;
-                } catch (RuntimeException e) {
-                    e.printStackTrace();
+
+                if (r != null) {
+                    try {
+                        System.out.println("Thread " + id + " is running a job." + "[" + running + "]");
+                        running++;
+                        
+                        // Run job
+                        r.run();
+                        r = null;
+                        
+                        System.out.println("Thread " + id + " is done with a job." + "[" + running + "]");
+                        running--;
+                    } catch (RuntimeException e) {
+                        e.printStackTrace();
+                    }
                 }
+            }
+
+            // Trigger threads
+            synchronized (queue) {
+                queue.notifyAll();
             }
             
             System.out.println("Thread " + id + " stopped. (" + queue.size() + ")" + "[" + running + "]");
-            
+
         }
-        
     }
-    
+
     public Integer getThreads() {
         return threads;
     }
@@ -92,5 +103,4 @@ public class MainThread {
     public void setWebsite(String website) {
         this.website = website;
     }
-    
 }
