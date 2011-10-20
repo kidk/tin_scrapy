@@ -43,18 +43,18 @@ public class DownloadThreadTest {
     public void testGetPath() {
         DownloadThread instance = new DownloadThread("");
         
-        assertEquals(instance.getPath("http://www.google.be/"), "/");
-        assertEquals(instance.getPath("http://www.google.be/test/index.html"), "/test/index.html");
-        assertEquals(instance.getPath("http://www.google.be/index.html"), "/index.html");
+        assertEquals(instance.getPath("http://www.google.be/"), "");
+        assertEquals(instance.getPath("http://www.google.be/test/index.html"), "test/index.html");
+        assertEquals(instance.getPath("http://www.google.be/index.html"), "index.html");
     }
     
     @Test
     public void testGetBaseUrl() {
         DownloadThread instance = new DownloadThread("");
         
-        assertEquals(instance.getBaseUrl("http://www.google.be/"), "http://www.google.be");
-        assertEquals(instance.getBaseUrl("http://www.google.be/test/index.html"), "http://www.google.be");
-        assertEquals(instance.getBaseUrl("http://www.google.be/index.html"), "http://www.google.be");
+        assertEquals(instance.getBaseUrl("http://www.google.be/"), "http://www.google.be/");
+        assertEquals(instance.getBaseUrl("http://www.google.be/test/index.html"), "http://www.google.be/");
+        assertEquals(instance.getBaseUrl("http://www.google.be/index.html"), "http://www.google.be/");
     }
     
     @Test
@@ -70,9 +70,9 @@ public class DownloadThreadTest {
     public void testgetPathWithFilename() {
         DownloadThread instance = new DownloadThread("");
         
-        assertEquals(instance.getPathWithFilename("http://www.google.be/"), "/index.html");
-        assertEquals(instance.getPathWithFilename("http://www.google.be/test/index.html"), "/test/index.html");
-        assertEquals(instance.getPathWithFilename("http://www.google.be/index.html"), "/index.html");
-        assertEquals(instance.getPathWithFilename("http://www.google.be/google.png"), "/google.png");
+        assertEquals(instance.getPathWithFilename("http://www.google.be/"), "index.html");
+        assertEquals(instance.getPathWithFilename("http://www.google.be/test/index.html"), "test/index.html");
+        assertEquals(instance.getPathWithFilename("http://www.google.be/index.html"), "index.html");
+        assertEquals(instance.getPathWithFilename("http://www.google.be/google.png"), "google.png");
     }
 }

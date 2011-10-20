@@ -10,7 +10,7 @@ import java.util.List;
 public class MainThread {
 
     private String website;
-    private Integer threads;
+    private Integer threads; 
     private final Queue queue = Queue.getInstance();
     private final List<PoolWorker> workers = new ArrayList();
     private Integer running = 0;
@@ -33,8 +33,6 @@ public class MainThread {
         }
 
     }
-    
-    
     
     private class PoolWorker extends Thread {
 
@@ -63,17 +61,17 @@ public class MainThread {
                 }
                 
                 try {
-                    System.out.println("Thread " + id + " is running.");
+                    System.out.println("Thread " + id + " is running." + "[" + running + "]");
                     running++;
                     r.run(); 
-                    System.out.println("Thread " + id + " is done.");
+                    System.out.println("Thread " + id + " is done." + "[" + running + "]");
                     running--;
                 } catch (RuntimeException e) {
                     e.printStackTrace();
                 }
             }
             
-            System.out.println("Thread " + id + " stopped. (" + queue.size() + ")");
+            System.out.println("Thread " + id + " stopped. (" + queue.size() + ")" + "[" + running + "]");
             
         }
         

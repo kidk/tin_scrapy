@@ -1,10 +1,14 @@
 package algoritme;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -40,6 +44,7 @@ public class DownloadThread implements Runnable {
     public void run() {
         Document doc = null;
         InputStream input = null;
+        BufferedReader bfrd = null;
         URI uri = null;
 
         // Debug
@@ -49,6 +54,7 @@ public class DownloadThread implements Runnable {
         try {
             uri = new URI(website);
             input = uri.toURL().openStream();
+            bfrd = new BufferedReader(new InputStreamReader(input));
         } catch (URISyntaxException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
@@ -63,7 +69,7 @@ public class DownloadThread implements Runnable {
         if (type.equals("text/html")) {
             // HTML Parsen
             try {
-                doc = Jsoup.parse(input, "UTF-8", getBaseUrl(website));
+                doc = Jsoup.parse(input, "UTF-8", getBaseUrl(website)); // Codering = fout
             } catch (IOException ex) {
                 Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, website + " niet afgehaald.", ex);
                 return;
@@ -78,30 +84,53 @@ public class DownloadThread implements Runnable {
         }
 
         File bestand = new File(getPathWithFilename(website));
-        if (bestand.canWrite()) {
-            FileOutputStream output = null;
+        System.out.println("Save to " + bestand.getAbsolutePath());
+        if (!bestand.exists()) {
+            // Maak bestand en dir's aan
             try {
-                output = new FileOutputStream(bestand);
-            } catch (FileNotFoundException ex) {
-                Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            try {
-                while ((bytesRead = input.read(buffer)) != -1) {
-                    output.write(buffer, 0, bytesRead);
+                if (bestand.getParentFile() != null) {
+                    bestand.getParentFile().mkdirs();
                 }
+                bestand.createNewFile();
             } catch (IOException ex) {
                 Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
             }
+
+            // Open bestand
+            BufferedWriter output = null;
+            try {
+                output = new BufferedWriter(new FileWriter(bestand));
+            } catch (IOException ex) {
+                Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            // Kopieer inputstream naar outputfile
+            if (type.equals("text/html")) {
+                try {
+                    output.write(doc.html());
+                } catch (IOException ex) {
+                    Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            } else {
+                String line;
+                try {
+                    while ((line = bfrd.readLine()) != null) {
+                        output.write(line);
+                        output.newLine();
+                    }
+                } catch (IOException ex) {
+                    Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+
+
+            // Close it
             try {
                 input.close();
                 output.close();
             } catch (IOException ex) {
                 Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
             }
-        } else {
-            System.out.println(website + " kan niet opgeslagen worden.");
         }
     }
 
@@ -115,8 +144,8 @@ public class DownloadThread implements Runnable {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        if (result.charAt(0) != '/') {
-            result = "/" + result;
+        if (result.charAt(0) == '/') {
+            result = result.substring(1);
         }
 
         return result;
@@ -124,8 +153,7 @@ public class DownloadThread implements Runnable {
 
     public String getPathWithFilename(String url) {
         String result = getPath(url);
-
-        if (result.charAt(result.length() - 1) == '/') {
+        if ((result.length() > 1 && result.charAt(result.length() - 1) == '/') || result.length() == 0) {
             return result + "index.html";
         } else {
             return result;
@@ -136,7 +164,7 @@ public class DownloadThread implements Runnable {
         // Path ophalen
         try {
             URI path = new URI(url);
-            return "http://" + path.toURL().getHost();
+            return "http://" + path.toURL().getHost() + "/";
         } catch (URISyntaxException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
