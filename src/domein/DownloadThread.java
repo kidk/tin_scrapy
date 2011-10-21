@@ -57,12 +57,14 @@ public class DownloadThread implements Runnable {
     public DownloadThread(String website, String dir) {
         setWebsite(website);
         setDir(dir);
-        System.out.println("Added " + website + " to queue. (" + dir + ")");
     }
 
     public void execute(Runnable r) {
         synchronized (queue) {
-            queue.addLast(r);
+            if (!queue.contains(r)) {
+                queue.addLast(r);
+                System.out.println("Added " + website + " to queue. (" + dir + ")");
+            }
             queue.notify();
         }
     }
@@ -117,9 +119,10 @@ public class DownloadThread implements Runnable {
             Elements links = doc.getElementsByTag("a");
             for (Element link : links) {
                 if ((!(link.attr("href")).contains("mailto")) && (!(link.attr("href")).contains("http://"))) {
+
                     addToQueue(getBaseUrl(website) + getPath(link.attr("href")));
-                } 
-                if ((link.attr("href")).contains("mailto")){
+                }
+                if ((link.attr("href")).contains("mailto")) {
                     addEmail(link.attr("href").replace("mailto:", ""));
                 }
                 if ((link.attr("href")).contains("http://")) { //Denk niet dat dit een goede manier is tbh... maar werkt wel
