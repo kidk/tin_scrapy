@@ -22,6 +22,7 @@ public class Main {
         
         // Set commandline options
         algo.setThreads(validator.threads);
+        algo.setDataDir(validator.dir);
         
         // Start
         algo.start();

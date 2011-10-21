@@ -29,9 +29,12 @@ public class DownloadThread implements Runnable {
 
     private final Queue queue = Queue.getInstance();
     private String website;
+    private String dir;
 
-    DownloadThread(String website) {
+    DownloadThread(String website, String dir) {
         this.website = website;
+        this.dir = dir;
+        System.out.println("Added " + website + " to queue. (" + dir + ")");
     }
 
     public void execute(Runnable r) {
@@ -50,6 +53,11 @@ public class DownloadThread implements Runnable {
         // Debug
         System.out.println("Fetching " + website);
 
+        // Bestaat lokaal bestand
+        File bestand = new File(getPathWithFilename(website));
+        if (bestand.exists())
+            return;
+        
         // Bestand ophalen
         try {
             uri = new URI(website);
@@ -78,17 +86,16 @@ public class DownloadThread implements Runnable {
             // Afbeeldingen / CSS / Javascript / Flash / ... afhalen
             Elements images = doc.getElementsByTag("img");
             for (Element image : images) {
-                execute(new DownloadThread(getBaseUrl(website) + getPath(image.attr("src"))));
+                addToQueue(getBaseUrl(website) + getPath(image.attr("src")));
             }
             
             Elements links = doc.getElementsByTag("a");
             for (Element link : links) {
-                execute(new DownloadThread(getBaseUrl(website) + getPath(link.attr("href"))));
+                addToQueue(getBaseUrl(website) + getPath(link.attr("href")));
             }
             
         }
 
-        File bestand = new File(getPathWithFilename(website));
         System.out.println("Save to " + bestand.getAbsolutePath());
         createFile(bestand);
 
@@ -105,6 +112,12 @@ public class DownloadThread implements Runnable {
         } catch (IOException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    public void addToQueue(String url) {
+        File bestand = new File(getPathWithFilename(url));
+        if (!bestand.exists())
+            execute(new DownloadThread(url, dir));
     }
 
     public void createFile(File bestand) {
@@ -127,8 +140,6 @@ public class DownloadThread implements Runnable {
         } catch (IOException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        // Kopieer inputstream naar outputfile
 
         try {
             output.write(html);
@@ -173,8 +184,7 @@ public class DownloadThread implements Runnable {
         // Path ophalen
         String result = "fail";
         try {
-            System.out.println("Slechte url : " + url);
-            URI path = new URI(url);
+            URI path = new URI(url.replace(" ", "%20")); // Redelijk hacky, zou een betere oplossing voor moeten zijn
             result = path.getPath();
         } catch (URISyntaxException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
@@ -190,9 +200,9 @@ public class DownloadThread implements Runnable {
     public String getPathWithFilename(String url) {
         String result = getPath(url);
         if ((result.length() > 1 && result.charAt(result.length() - 1) == '/') || result.length() == 0) {
-            return result + "index.html";
+            return dir + result + "index.html";
         } else {
-            return result;
+            return dir + result;
         }
     }
 

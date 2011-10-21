@@ -14,4 +14,7 @@ public class CommandlineValidator {
     
     @Parameter(names = {"-t", "--threads"}, description = "Threads")
     public Integer threads = new Integer(10);
+    
+    @Parameter(names = {"-d", "--data"}, description = "Save dir")
+    public String dir = new String("data/");
 }

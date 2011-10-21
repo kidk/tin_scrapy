@@ -14,16 +14,17 @@ public class MainThread {
     private final Queue queue = Queue.getInstance();
     private final List<PoolWorker> workers = new ArrayList();
     private Integer running = 0;
+    private String dir;
 
     public MainThread(String website) {
         this.website = website;
     }
 
     public void start() {
-
+        
         // Eerste pagina toevoegen een work queue
         System.out.println("Eerste pagina");
-        Queue.getInstance().add(new DownloadThread(website));
+        Queue.getInstance().add(new DownloadThread(website, dir));
 
         // Threads aanmaken en aan het werk zetten
         System.out.println("Threads aanmaken");
@@ -102,5 +103,13 @@ public class MainThread {
 
     public void setWebsite(String website) {
         this.website = website;
+    }
+    
+    public void setDataDir(String dir) {
+        this.dir = dir;
+    }
+    
+    public String getDataDir() {
+        return dir;
     }
 }
