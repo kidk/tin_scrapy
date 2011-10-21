@@ -76,61 +76,96 @@ public class DownloadThread implements Runnable {
             }
 
             // Afbeeldingen / CSS / Javascript / Flash / ... afhalen
-            System.out.println("images");
             Elements images = doc.getElementsByTag("img");
             for (Element image : images) {
                 execute(new DownloadThread(getBaseUrl(website) + getPath(image.attr("src"))));
             }
+            
+            Elements links = doc.getElementsByTag("a");
+            for (Element link : links) {
+                execute(new DownloadThread(getBaseUrl(website) + getPath(link.attr("href"))));
+            }
+            
         }
 
         File bestand = new File(getPathWithFilename(website));
         System.out.println("Save to " + bestand.getAbsolutePath());
-        if (!bestand.exists()) {
-            // Maak bestand en dir's aan
-            try {
-                if (bestand.getParentFile() != null) {
-                    bestand.getParentFile().mkdirs();
-                }
-                bestand.createNewFile();
-            } catch (IOException ex) {
-                Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
-            }
+        createFile(bestand);
 
-            // Open bestand
-            BufferedWriter output = null;
-            try {
-                output = new BufferedWriter(new FileWriter(bestand));
-            } catch (IOException ex) {
-                Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
-            }
+        // Save
+        if (type.equals("text/html")) {
+            saveHtml(bestand, doc.html());
+        } else {
+            saveBinary(bestand, input);
+        }
 
-            // Kopieer inputstream naar outputfile
-            if (type.equals("text/html")) {
-                try {
-                    output.write(doc.html());
-                } catch (IOException ex) {
-                    Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            } else {
-                String line;
-                try {
-                    while ((line = bfrd.readLine()) != null) {
-                        output.write(line);
-                        output.newLine();
-                    }
-                } catch (IOException ex) {
-                    Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
-                }
+        // Close
+        try {
+            input.close();
+        } catch (IOException ex) {
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void createFile(File bestand) {
+        // Maak bestand en dir's aan
+        try {
+            if (bestand.getParentFile() != null) {
+                bestand.getParentFile().mkdirs();
             }
+            bestand.createNewFile();
+        } catch (IOException ex) {
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void saveHtml(File bestand, String html) {
+        // Open bestand
+        BufferedWriter output = null;
+        try {
+            output = new BufferedWriter(new FileWriter(bestand));
+        } catch (IOException ex) {
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        // Kopieer inputstream naar outputfile
+
+        try {
+            output.write(html);
+        } catch (IOException ex) {
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
 
-            // Close it
-            try {
-                input.close();
-                output.close();
-            } catch (IOException ex) {
-                Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+        // Close it
+        try {
+            output.close();
+        } catch (IOException ex) {
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void saveBinary(File bestand, InputStream input) {
+        FileOutputStream output = null;
+        try {
+            output = new FileOutputStream(bestand);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        byte[] buffer = new byte[4096];
+        int bytesRead;
+        try {
+            while ((bytesRead = input.read(buffer)) != -1) {
+                output.write(buffer, 0, bytesRead);
             }
+        } catch (IOException ex) {
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        try {
+            input.close();
+            output.close();
+        } catch (IOException ex) {
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -138,6 +173,7 @@ public class DownloadThread implements Runnable {
         // Path ophalen
         String result = "fail";
         try {
+            System.out.println("Slechte url : " + url);
             URI path = new URI(url);
             result = path.getPath();
         } catch (URISyntaxException ex) {
