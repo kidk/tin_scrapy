@@ -32,7 +32,6 @@ public class DownloadThread implements Runnable {
     private final Queue queue = Queue.getInstance();
     private String website;
     private String dir;
-    
     private List<Email> emailList = new ArrayList<Email>();
 
     public String getDir() {
@@ -50,11 +49,10 @@ public class DownloadThread implements Runnable {
     public void setWebsite(String website) {
         this.website = website;
     }
-    
+
     //Efkes emtpy constructor, wordt nog gewijzigd
     DownloadThread() {
     }
-    
 
     public DownloadThread(String website, String dir) {
         setWebsite(website);
@@ -81,9 +79,10 @@ public class DownloadThread implements Runnable {
 
         // Bestaat lokaal bestand
         File bestand = new File(getPathWithFilename(website));
-        if (bestand.exists())
+        if (bestand.exists()) {
             return;
-        
+        }
+
         // Bestand ophalen
         try {
             uri = new URI(website);
@@ -114,15 +113,20 @@ public class DownloadThread implements Runnable {
             for (Element image : images) {
                 addToQueue(getBaseUrl(website) + getPath(image.attr("src")));
             }
-            
+
             Elements links = doc.getElementsByTag("a");
             for (Element link : links) {
-                if (!(link.attr("href")).contains("mailto"))
-                     addToQueue(getBaseUrl(website) + getPath(link.attr("href")));
-                else
-                 addEmail(link.attr("href").replace("mailto:",""));   
+                if ((!(link.attr("href")).contains("mailto")) && (!(link.attr("href")).contains("http://"))) {
+                    addToQueue(getBaseUrl(website) + getPath(link.attr("href")));
+                } 
+                if ((link.attr("href")).contains("mailto")){
+                    addEmail(link.attr("href").replace("mailto:", ""));
+                }
+                if ((link.attr("href")).contains("http://")) { //Denk niet dat dit een goede manier is tbh... maar werkt wel
+                    addExternalLink(link.attr("href"));
+                }
             }
-            
+
         }
 
         System.out.println("Save to " + bestand.getAbsolutePath());
@@ -142,11 +146,12 @@ public class DownloadThread implements Runnable {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     public void addToQueue(String url) {
         File bestand = new File(getPathWithFilename(url));
-        if (!bestand.exists())
+        if (!bestand.exists()) {
             execute(new DownloadThread(url, dir));
+        }
     }
 
     public void createFile(File bestand) {
@@ -227,7 +232,7 @@ public class DownloadThread implements Runnable {
     }
 
     public String getPathWithFilename(String url) {
-        String result = getPath(url);  
+        String result = getPath(url);
         result = result.replace("http://", "");
         if ((result.length() > 1 && result.charAt(result.length() - 1) == '/') || result.length() == 0) {
             return dir + result + "index.html";
@@ -275,5 +280,10 @@ public class DownloadThread implements Runnable {
         Email email = new Email(mail);
         emailList.add(email);
         System.out.println("Email found and added: " + email.getAddress());
+    }
+
+    private void addExternalLink(String link) {
+        ExternalLink elink = new ExternalLink(link);
+        System.out.println("External Link added. link: " + link);
     }
 }
