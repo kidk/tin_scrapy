@@ -16,6 +16,11 @@ public class MainThread {
     private Integer running = 0;
     private String dir;
 
+    
+    //Efkes empty constructor
+    public MainThread() {
+        
+    }
     public MainThread(String website) {
         this.website = website;
     }

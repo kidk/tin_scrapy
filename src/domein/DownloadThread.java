@@ -31,7 +31,28 @@ public class DownloadThread implements Runnable {
     private String website;
     private String dir;
 
-    DownloadThread(String website, String dir) {
+    public String getDir() {
+        return dir;
+    }
+
+    public void setDir(String dir) {
+        this.dir = dir;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+    
+    //Efkes emtpy constructor, wordt nog gewijzigd
+    DownloadThread() {
+    }
+    
+
+    public DownloadThread(String website, String dir) {
         this.website = website;
         this.dir = dir;
         System.out.println("Added " + website + " to queue. (" + dir + ")");
