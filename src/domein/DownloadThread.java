@@ -1,4 +1,4 @@
-package algoritme;
+package domein;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

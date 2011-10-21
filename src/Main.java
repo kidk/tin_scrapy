@@ -1,4 +1,4 @@
-import algoritme.MainThread;
+import domein.MainThread;
 import com.beust.jcommander.JCommander;
 import tools.CommandlineValidator;
 
