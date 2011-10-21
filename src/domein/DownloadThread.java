@@ -14,6 +14,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jsoup.Jsoup;
@@ -30,6 +32,8 @@ public class DownloadThread implements Runnable {
     private final Queue queue = Queue.getInstance();
     private String website;
     private String dir;
+    
+    private List<Email> emailList = new ArrayList<Email>();
 
     public String getDir() {
         return dir;
@@ -113,7 +117,10 @@ public class DownloadThread implements Runnable {
             
             Elements links = doc.getElementsByTag("a");
             for (Element link : links) {
-                addToQueue(getBaseUrl(website) + getPath(link.attr("href")));
+                if (!(link.attr("href")).contains("mailto"))
+                     addToQueue(getBaseUrl(website) + getPath(link.attr("href")));
+                else
+                 addEmail(link.attr("href").replace("mailto:",""));   
             }
             
         }
@@ -262,5 +269,11 @@ public class DownloadThread implements Runnable {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
             return "text/unknown";
         }
+    }
+
+    private void addEmail(String mail) {
+        Email email = new Email(mail);
+        emailList.add(email);
+        System.out.println("Email found and added: " + email.getAddress());
     }
 }
