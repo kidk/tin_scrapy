@@ -53,8 +53,8 @@ public class DownloadThread implements Runnable {
     
 
     public DownloadThread(String website, String dir) {
-        this.website = website;
-        this.dir = dir;
+        setWebsite(website);
+        setDir(dir);
         System.out.println("Added " + website + " to queue. (" + dir + ")");
     }
 
@@ -65,6 +65,7 @@ public class DownloadThread implements Runnable {
         }
     }
 
+    @Override
     public void run() {
         Document doc = null;
         InputStream input = null;
@@ -147,6 +148,7 @@ public class DownloadThread implements Runnable {
             if (bestand.getParentFile() != null) {
                 bestand.getParentFile().mkdirs();
             }
+            System.out.println("Path " + bestand.getAbsolutePath());
             bestand.createNewFile();
         } catch (IOException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
@@ -206,11 +208,10 @@ public class DownloadThread implements Runnable {
         String result = "fail";
         try {
             URI path = new URI(url.replace(" ", "%20")); // Redelijk hacky, zou een betere oplossing voor moeten zijn
-            result = path.getPath();
+            result = path.toString();
         } catch (URISyntaxException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
-
         if (result.charAt(0) == '/') {
             result = result.substring(1);
         }
@@ -219,7 +220,8 @@ public class DownloadThread implements Runnable {
     }
 
     public String getPathWithFilename(String url) {
-        String result = getPath(url);
+        String result = getPath(url);  
+        result = result.replace("http://", "");
         if ((result.length() > 1 && result.charAt(result.length() - 1) == '/') || result.length() == 0) {
             return dir + result + "index.html";
         } else {
