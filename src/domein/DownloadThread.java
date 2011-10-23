@@ -63,7 +63,7 @@ public class DownloadThread implements Runnable {
         synchronized (queue) {
             if (!queue.contains(r)) {
                 queue.addLast(r);
-                System.out.println("Added " + website + " to queue. (" + dir + ")");
+                System.out.println("Added " + getWebsite() + " to queue. (" + getDir() + ")");
             }
             queue.notify();
         }
@@ -125,7 +125,7 @@ public class DownloadThread implements Runnable {
                 if ((link.attr("href")).contains("mailto")) {
                     addEmail(link.attr("href").replace("mailto:", ""));
                 }
-                if ((link.attr("href")).contains("http://")) { //Denk niet dat dit een goede manier is tbh... maar werkt wel
+                if (((link.attr("href")).contains("http://")) && (!(link.attr("href")).contains(website.replace("http://", "")))) { //Denk niet dat dit een goede manier is tbh... maar werkt wel
                     addExternalLink(link.attr("href"));
                 }
             }
@@ -287,6 +287,6 @@ public class DownloadThread implements Runnable {
 
     private void addExternalLink(String link) {
         ExternalLink elink = new ExternalLink(link);
-        System.out.println("External Link added. link: " + link);
+        System.out.println("External Link found and added. link: " + link);
     }
 }
