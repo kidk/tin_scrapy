@@ -50,8 +50,8 @@ public class DownloadThread implements Runnable {
         this.website = website;
     }
 
-    //Efkes emtpy constructor, wordt nog gewijzigd
-    DownloadThread() {
+    public DownloadThread() {
+        
     }
 
     public DownloadThread(String website, String dir) {
@@ -118,14 +118,13 @@ public class DownloadThread implements Runnable {
 
             Elements links = doc.getElementsByTag("a");
             for (Element link : links) {
-                if ((!(link.attr("href")).contains("mailto")) && (!(link.attr("href")).contains("http://"))) {
-
+                if ((!(link.attr("href")).contains("mailto")) && !isExternal(link.attr("href"), website)) {
                     addToQueue(getBaseUrl(website) + getPath(link.attr("href")));
                 }
                 if ((link.attr("href")).contains("mailto")) {
                     addEmail(link.attr("href").replace("mailto:", ""));
                 }
-                if (((link.attr("href")).contains("http://")) && (!(link.attr("href")).contains(website.replace("http://", "")))) { //Denk niet dat dit een goede manier is tbh... maar werkt wel
+                if (isExternal(link.attr("href"), website)) { //Denk niet dat dit een goede manier is tbh... maar werkt wel
                     addExternalLink(link.attr("href"));
                 }
             }
@@ -288,5 +287,22 @@ public class DownloadThread implements Runnable {
     private void addExternalLink(String link) {
         ExternalLink elink = new ExternalLink(link);
         System.out.println("External Link found and added. link: " + link);
+    }
+
+    public boolean isExternal(String attr, String website) {
+        URI check = null;
+        URI source = null;
+        try {
+            check = new URI(attr);
+            source = new URI(website);
+        } catch (URISyntaxException ex) {
+            return true;
+        }
+        
+        if (check.getHost().equals(source.getHost()))
+            return false;
+        
+        
+        return true;       
     }
 }

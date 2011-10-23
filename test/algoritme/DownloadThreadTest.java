@@ -28,9 +28,9 @@ public class DownloadThreadTest {
      */
     @Test
     public void testGetPath() {  
-        assertEquals(instance.getPath("http://www.google.be/"), "");
-        assertEquals(instance.getPath("http://www.google.be/test/index.html"), "test/index.html");
-        assertEquals(instance.getPath("http://www.google.be/index.html"), "index.html");
+        assertEquals(instance.getPath("http://www.google.be/"), "http://www.google.be/");
+        assertEquals(instance.getPath("http://www.google.be/test/index.html"), "http://www.google.be/test/index.html");
+        assertEquals(instance.getPath("http://www.google.be/index.html"), "http://www.google.be/index.html");
     }
     
     @Test
@@ -49,9 +49,17 @@ public class DownloadThreadTest {
     
     @Test
     public void testgetPathWithFilename() {    
-        assertEquals(instance.getPathWithFilename("http://www.google.be/"), "index.html");
-        assertEquals(instance.getPathWithFilename("http://www.google.be/test/index.html"), "test/index.html");
-        assertEquals(instance.getPathWithFilename("http://www.google.be/index.html"), "index.html");
-        assertEquals(instance.getPathWithFilename("http://www.google.be/google.png"), "google.png");
+        assertEquals(instance.getPathWithFilename("http://www.google.be/"), "www.google.be/index.html");
+        assertEquals(instance.getPathWithFilename("http://www.google.be/test/index.html"), "www.google.be/test/index.html");
+        assertEquals(instance.getPathWithFilename("http://www.google.be/index.html"), "www.google.be/index.html");
+        assertEquals(instance.getPathWithFilename("http://www.google.be/google.png"), "www.google.be/google.png");
+    }
+    
+    @Test
+    public void testIsExternal() {
+        assertTrue(instance.isExternal("http://www.sava.be/", "http://google.be/"));
+        assertTrue(instance.isExternal("http://www.sava.be/", "http://www.google.be/"));
+        assertFalse(instance.isExternal("http://sava.be/", "http://sava.be/"));
+        assertFalse(instance.isExternal("http://www.sava.be/", "http://www.sava.be/index.html"));
     }
 }
