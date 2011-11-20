@@ -39,7 +39,6 @@ public class MainThread {
         }
 
     }
-
     private class PoolWorker extends Thread {
 
         private Integer id;
