@@ -1,6 +1,5 @@
 package domein;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -8,12 +7,13 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -21,7 +21,6 @@ import java.util.logging.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 /**
  *
@@ -32,6 +31,8 @@ public class DownloadThread implements Runnable {
     private final Queue queue = Queue.getInstance();
     private String website;
     private String dir;
+    private int currentDepth;
+    private int maxDepth;
     private List<Email> emailList = new ArrayList<Email>();
 
     public String getDir() {
@@ -50,13 +51,35 @@ public class DownloadThread implements Runnable {
         this.website = website;
     }
 
+    public int getCurrentDepth() {
+        return currentDepth;
+    }
+
+    public void setCurrentDepth(int depth) {
+        this.currentDepth = depth;
+    }
+
+    public int getMaxDepth() {
+        return maxDepth;
+    }
+
+    public void setMaxDepth(int depth) {
+        this.maxDepth = depth;
+    }
+
     public DownloadThread() {
         
     }
 
     public DownloadThread(String website, String dir) {
+        this(website, dir, 0, 0);
+    }
+
+    public DownloadThread(String website, String dir, int currentDepth, int maxDepth) {
         setWebsite(website);
         setDir(dir);
+        setCurrentDepth(currentDepth);
+        setMaxDepth(maxDepth);
     }
 
     public void execute(Runnable r) {
@@ -73,14 +96,16 @@ public class DownloadThread implements Runnable {
     public void run() {
         Document doc = null;
         InputStream input = null;
-        BufferedReader bfrd = null;
         URI uri = null;
 
         // Debug
         System.out.println("Fetching " + website);
 
+        String fileLok = dir + ((currentDepth > 0) ? getLocalFileName(getPathWithFilename(website)) : "index.html");
+
         // Bestaat lokaal bestand
-        File bestand = new File(getPathWithFilename(website));
+        File bestand = new File(fileLok);
+
         if (bestand.exists()) {
             return;
         }
@@ -89,7 +114,6 @@ public class DownloadThread implements Runnable {
         try {
             uri = new URI(website);
             input = uri.toURL().openStream();
-            bfrd = new BufferedReader(new InputStreamReader(input));
         } catch (URISyntaxException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
@@ -104,34 +128,82 @@ public class DownloadThread implements Runnable {
         if (type.equals("text/html")) {
             // HTML Parsen
             try {
-                doc = Jsoup.parse(input, "UTF-8", getBaseUrl(website)); // Codering = fout
+                doc = Jsoup.parse(input, null, getBaseUrl(website));
             } catch (IOException ex) {
                 Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, website + " niet afgehaald.", ex);
                 return;
             }
 
-            // Afbeeldingen / CSS / Javascript / Flash / ... afhalen
-            Elements images = doc.getElementsByTag("img");
-            for (Element image : images) {
-                addToQueue(getBaseUrl(website) + getPath(image.attr("src")));
+            // base tags moeten leeg zijn
+            doc.getElementsByTag("base").remove();
+
+            // Script tags leeg maken => krijgen veel te veel errors => soms blijven pagina's hangen hierdoor
+            doc.getElementsByTag("script").remove();
+
+            // Afbeeldingen 
+            for (Element image : doc.getElementsByTag("img")) {
+
+                // Afbeelding ophalen
+                addToQueue(getPath(image.attr("src")));
+
+                // Afbeelding zijn source vervangen door een MD5 hash 
+                image.attr("src", getLocalFileName(getPathWithFilename(image.attr("src"))));
+
             }
 
-            Elements links = doc.getElementsByTag("a");
-            for (Element link : links) {
-                if ((!(link.attr("href")).contains("mailto")) && !isExternal(link.attr("href"), website)) {
-                    addToQueue(getBaseUrl(website) + getPath(link.attr("href")));
+            // CSS bestanden
+            for (Element cssFile : doc.getElementsByTag("link")) {
+                
+                if(cssFile.attr("rel").equals("stylesheet")) {
+
+                    // CSS bestand ophalen
+                    addToQueue(getPath(cssFile.attr("href")));
+
+                    // CSS bestand zijn verwijziging vervangen door een MD5 hash
+                    cssFile.attr("href", getLocalFileName(getPathWithFilename(cssFile.attr("href"))));
+                                       
                 }
-                if ((link.attr("href")).contains("mailto")) {
+                
+            }
+
+            // Links overlopen
+            for (Element link : doc.getElementsByTag("a")) {
+
+                if (link.attr("href").contains("#") || link.attr("href").startsWith("ftp://")) {
+                    continue;
+                }
+
+                // Link toevoegen 
+                if (!(link.attr("href")).contains("mailto")) {
+
+                    if(link.attr("href").equals(".")) {
+                        link.attr("href", "index.html");
+                        continue;
+                    }
+                        
+                    if(link.attr("href").startsWith("http") && isExternal(link.attr("href"), website))
+                    {
+                        addExternalLink(link.attr("href"));
+                    }
+                    else
+                    {
+                        if(maxDepth > 0 && currentDepth >= maxDepth)
+                            continue;
+
+                        addToQueue(getPath(link.attr("href")));
+
+                        link.attr("href", getLocalFileName(getPathWithFilename(getPath(link.attr("href")))));
+                    }
+                }
+                else if ((link.attr("href")).contains("mailto")) {
                     addEmail(link.attr("href").replace("mailto:", ""));
-                }
-                if (isExternal(link.attr("href"), website)) { //Denk niet dat dit een goede manier is tbh... maar werkt wel
-                    addExternalLink(link.attr("href"));
                 }
             }
 
         }
 
         System.out.println("Save to " + bestand.getAbsolutePath());
+
         createFile(bestand);
 
         // Save
@@ -150,10 +222,7 @@ public class DownloadThread implements Runnable {
     }
 
     public void addToQueue(String url) {
-        File bestand = new File(getPathWithFilename(url));
-        if (!bestand.exists()) {
-            execute(new DownloadThread(url, dir));
-        }
+        execute(new DownloadThread(url, dir, currentDepth + 1, maxDepth));
     }
 
     public void createFile(File bestand) {
@@ -218,24 +287,35 @@ public class DownloadThread implements Runnable {
     }
 
     public String getPath(String url) {
-        // Path ophalen
+
         String result = "fail";
+
         try {
+
+            // Indien het url niet start met http, https of ftp er het huidige url voorplakken
+            if(!url.startsWith("http") && !url.startsWith("https") && !url.startsWith("ftp"))
+            {
+                // Indien het url start met '/', eruithalen, anders krijgen we bijvoorbeeld http://www.hln.be//Page/14/01/2011/...
+                url = getBaseUrl(website) + (url.startsWith("/") ? url.substring(1) : url);
+            }
+
             URI path = new URI(url.replace(" ", "%20")); // Redelijk hacky, zou een betere oplossing voor moeten zijn
+
             result = path.toString();
+
         } catch (URISyntaxException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
-        if (result.charAt(0) == '/') {
-            result = result.substring(1);
-        }
-
+        
         return result;
     }
 
     public String getPathWithFilename(String url) {
+
         String result = getPath(url);
+
         result = result.replace("http://", "");
+        
         if ((result.length() > 1 && result.charAt(result.length() - 1) == '/') || result.length() == 0) {
             return dir + result + "index.html";
         } else {
@@ -247,7 +327,8 @@ public class DownloadThread implements Runnable {
         // Path ophalen
         try {
             URI path = new URI(url);
-            return "http://" + path.toURL().getHost() + "/";
+            String host = "http://" + path.toURL().getHost();
+            return host.endsWith("/") ? host : (host + "/");
         } catch (URISyntaxException ex) {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         } catch (MalformedURLException ex) {
@@ -266,7 +347,7 @@ public class DownloadThread implements Runnable {
             Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
         }
         try {
-            result = ((HttpURLConnection) uri.openConnection()).getContentType();
+            result = ((URLConnection) uri.openConnection()).getContentType();
             if (result.indexOf(";") != -1) {
                 return result.substring(0, result.indexOf(";"));
             } else {
@@ -290,6 +371,7 @@ public class DownloadThread implements Runnable {
     }
 
     public boolean isExternal(String attr, String website) {
+
         URI check = null;
         URI source = null;
         try {
@@ -299,10 +381,51 @@ public class DownloadThread implements Runnable {
             return true;
         }
         
-        if (check.getHost().equals(source.getHost()))
+        if ( check.getHost().equals(source.getHost()))
             return false;
         
         
         return true;       
+    }
+
+    public String getLocalFileName(String name)
+    {
+        try {
+            byte[] bytesOfMessage = name.getBytes("UTF-8");
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] thedigest = md.digest(bytesOfMessage);
+            String extension = getExtension(name);
+            return new BigInteger(1,thedigest).toString(16) + ("".equals(extension) ? "" : "." + extension);
+        } catch (Exception ex) {
+            Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return "0";
+    }
+
+    public String getExtension(String url)
+    {
+        // Haal de extensie uit het URL
+        // We starten altijd met html
+        String extension = "html";
+
+        // Indien een website gebruik maakt van ? in het url, bv, http://www.google.be/test.html?a=152&b=535
+        // split op het vraagteken en gebruik de linker helft.
+        url = url.split("\\?")[0];
+        
+        if(url.contains(".")) {
+
+            int mid = url.lastIndexOf(".");
+
+            extension = url.substring(mid + 1, url.length());
+
+            // Enkele extensies willen we vervangen + indien het resultaat eindigt
+            // op een / of \ wil het zeggen dat het url bijvoorbeeld http://www.google.com/nieuws/ was.
+            // De extensie is dan gewoon .html 
+            if(extension.equals("php") || extension.equals("dhtml") || extension.equals("aspx") || extension.equals("asp") ||
+               extension.contains("\\") || extension.contains("/")){                
+                extension = "html";                
+            }            
+        }
+        return extension;
     }
 }

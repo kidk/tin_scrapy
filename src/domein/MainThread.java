@@ -15,7 +15,8 @@ public class MainThread {
     private final List<PoolWorker> workers = new ArrayList();
     private Integer running = 0;
     private String dir;
-
+    private Integer depth = 0;
+    private Integer maxDepth = 0;
     
     //Efkes empty constructor
     public MainThread() {
@@ -29,7 +30,7 @@ public class MainThread {
         
         // Eerste pagina toevoegen een work queue
         System.out.println("Eerste pagina");
-        Queue.getInstance().add(new DownloadThread(website, dir));
+        Queue.getInstance().add(new DownloadThread(website, dir, getDepth(), getMaxDepth()));
 
         // Threads aanmaken en aan het werk zetten
         System.out.println("Threads aanmaken");
@@ -39,6 +40,7 @@ public class MainThread {
         }
 
     }
+
     private class PoolWorker extends Thread {
 
         private Integer id;
@@ -73,12 +75,15 @@ public class MainThread {
                         
                         // Run job
                         r.run();
-                        r = null;
-                        
                         System.out.println("Thread " + id + " is done with a job." + "[" + running + "]");
-                        running--;
+                        
                     } catch (RuntimeException e) {
                         e.printStackTrace();
+                    }
+                    finally
+                    {
+                        running--;
+                        r = null;
                     }
                 }
             }
@@ -91,6 +96,10 @@ public class MainThread {
             System.out.println("Thread " + id + " stopped. (" + queue.size() + ")" + "[" + running + "]");
 
         }
+    }
+
+    public void stopThreads(){
+        queue.clear();
     }
 
     public Integer getThreads() {
@@ -110,10 +119,32 @@ public class MainThread {
     }
     
     public void setDataDir(String dir) {
+
+        if(dir.endsWith("/") || dir.endsWith("\\"))
+            dir = dir + "\\";
+
         this.dir = dir;
+        
     }
     
     public String getDataDir() {
         return dir;
     }
-}
+ 
+    public Integer getDepth() {
+        return depth;
+    }
+
+    public void setDepth(Integer depth) {
+        this.depth = depth;
+    }
+
+    public Integer getMaxDepth() {
+        return maxDepth;
+    }
+
+    public void setMaxDepth(Integer maxDepth) {
+        this.maxDepth = maxDepth;
+    }
+}   
+

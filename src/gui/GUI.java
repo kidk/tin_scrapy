@@ -11,12 +11,9 @@ public class GUI extends javax.swing.JFrame {
 
     private MainThread mainThread;    
     
-    public GUI() {
-        
-        initComponents();
-        
-        redirectSystemStreams();
-        
+    public GUI() {        
+        initComponents();        
+        redirectSystemStreams();        
     }
 
     @SuppressWarnings("unchecked")
@@ -31,6 +28,8 @@ public class GUI extends javax.swing.JFrame {
         txtThreads = new javax.swing.JSpinner();
         jLabel3 = new javax.swing.JLabel();
         txtTempDir = new javax.swing.JTextField();
+        jLabel4 = new javax.swing.JLabel();
+        txtDepth = new javax.swing.JSpinner();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         txtOutput = new javax.swing.JTextArea();
@@ -43,7 +42,7 @@ public class GUI extends javax.swing.JFrame {
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Parameters", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 11), new java.awt.Color(0, 102, 102))); // NOI18N
 
-        txtWebsite.setText("http://www.tweakers.net");
+        txtWebsite.setText("http://programming-motherfucker.com/");
 
         btnStart.setText("Start");
         btnStart.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -56,11 +55,15 @@ public class GUI extends javax.swing.JFrame {
 
         jLabel2.setText("Threads");
 
-        txtThreads.setValue(10);
+        txtThreads.setValue(1);
 
         jLabel3.setText("TempDir");
 
-        txtTempDir.setText("c:\\Temp\\Data\\");
+        txtTempDir.setText("c:\\Temp\\Data\\Programming\\");
+
+            jLabel4.setText("Diepte");
+
+            txtDepth.setValue(1);
 
             javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
             jPanel1.setLayout(jPanel1Layout);
@@ -76,7 +79,11 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(jPanel1Layout.createSequentialGroup()
                             .addComponent(txtThreads, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 402, Short.MAX_VALUE)
+                            .addGap(36, 36, 36)
+                            .addComponent(jLabel4)
+                            .addGap(18, 18, 18)
+                            .addComponent(txtDepth, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 261, Short.MAX_VALUE)
                             .addComponent(btnStart))
                         .addComponent(txtTempDir, javax.swing.GroupLayout.DEFAULT_SIZE, 515, Short.MAX_VALUE)
                         .addComponent(txtWebsite, javax.swing.GroupLayout.DEFAULT_SIZE, 515, Short.MAX_VALUE))
@@ -96,7 +103,9 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel2)
                         .addComponent(txtThreads, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(btnStart))
+                        .addComponent(btnStart)
+                        .addComponent(jLabel4)
+                        .addComponent(txtDepth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addContainerGap())
             );
 
@@ -107,7 +116,6 @@ public class GUI extends javax.swing.JFrame {
             jScrollPane1.setViewportView(txtOutput);
 
             btnStop.setText("Stop");
-            btnStop.setEnabled(false);
             btnStop.addMouseListener(new java.awt.event.MouseAdapter() {
                 public void mouseClicked(java.awt.event.MouseEvent evt) {
                     btnStopMouseClicked(evt);
@@ -186,30 +194,19 @@ public class GUI extends javax.swing.JFrame {
         mainThread.setWebsite(txtWebsite.getText());
         mainThread.setThreads(Integer.parseInt(txtThreads.getValue().toString()));
         mainThread.setDataDir(txtTempDir.getText());
+        mainThread.setMaxDepth(Integer.parseInt(txtDepth.getValue().toString()));
         
         mainThread.start();
         
-        txtTempDir.setEnabled(false);
-        txtWebsite.setEnabled(false);
-        txtThreads.setEnabled(false);
-        btnStart.setEnabled(false);
-        btnStop.setEnabled(true);
-                
     }//GEN-LAST:event_btnStartMouseClicked
 
     private void btnStopMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnStopMouseClicked
-        
-        // Threads moeten stoppen 
-        
-        // mainThread op null
+
+        if(mainThread != null)
+            mainThread.stopThreads();
+
         mainThread = null;
         
-        txtTempDir.setEnabled(true);
-        txtWebsite.setEnabled(true);
-        txtThreads.setEnabled(true);
-        btnStart.setEnabled(true);
-        btnStop.setEnabled(false);
-                
     }//GEN-LAST:event_btnStopMouseClicked
 
     public static void main(String args[]) {
@@ -274,12 +271,14 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuItem jMenuItemClose;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSpinner txtDepth;
     private javax.swing.JTextArea txtOutput;
     private javax.swing.JTextField txtTempDir;
     private javax.swing.JSpinner txtThreads;
